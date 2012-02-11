@@ -1,0 +1,214 @@
+#LyX 1.6.4 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass scrartcl
+\begin_preamble
+\usepackage{fullpage}
+\end_preamble
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman charter
+\font_sans lmss
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize 12
+\spacing double
+\use_hyperref false
+\papersize letterpaper
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 2
+\tocdepth 2
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+CUDA SimDocs
+\end_layout
+
+\begin_layout Author
+Harlan Iverson
+\end_layout
+
+\begin_layout Date
+May __, 2011
+\end_layout
+
+\begin_layout Section*
+Algorithm
+\end_layout
+
+\begin_layout Standard
+Inputs: A: the matrix of documents.
+ k: the number of similar documents.
+ t: the threshold of similiarity.
+\end_layout
+
+\begin_layout Standard
+Output: B: matrix of up to k most similar documents
+\end_layout
+
+\begin_layout Enumerate
+Read in document matrix A
+\end_layout
+
+\begin_layout Enumerate
+Transpose A into D
+\end_layout
+
+\begin_layout Enumerate
+Copy D to device memory
+\end_layout
+
+\begin_layout Enumerate
+Create Q as r row partition of A
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+r=(n / num_threads)
+\end_layout
+
+\begin_layout Enumerate
+this should actually be a function of shared memory size
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+For each partition...
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+copy Q to device memory
+\end_layout
+
+\begin_layout Enumerate
+Launch kernel with pointer to Q
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $i=blockDim*blockIdx+threadIdx$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+copy row of 
+\begin_inset Formula $Q_{i}$
+\end_inset
+
+ into local memory
+\end_layout
+
+\begin_layout Enumerate
+int 
+\begin_inset Formula $a=0,b=0,c=0$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+compare 
+\begin_inset Formula $Q_{i}$
+\end_inset
+
+ to each 
+\begin_inset Formula $D_{j}$
+\end_inset
+
+ for 
+\begin_inset Formula $j=0..n-1$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Copy 
+\begin_inset Formula $D_{j}$
+\end_inset
+
+ into shared memory
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Use some kind of modular scheme to avoid concurrent reads of banks
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+\begin_inset Formula $a=a+v_{j}w_{j}$
+\end_inset
+
+ , 
+\begin_inset Formula $b=b+v_{j}^{2}$
+\end_inset
+
+ , 
+\begin_inset Formula $c=c+w_{j}^{2}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+float 
+\begin_inset Formula $y_{i}=\frac{a}{\sqrt{b}\sqrt{c}}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Use radix+counting sort on similarity vector y.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+either swap vectors or keep i with the value like a tuple.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Merge this execution's k similar rows with top k existing similar rows (in
+ y)
+\end_layout
+
+\end_deeper
+\begin_layout Section*
+Complexity Analysis
+\end_layout
+
+\end_body
+\end_document
